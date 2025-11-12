@@ -15,11 +15,14 @@ export default async function handler(req, res) {
     }
 
     // Transform cart items to draft order line items
-    const lineItems = cartItems.map(item => ({
-      variant_id: item.variant_id,
-      quantity: item.quantity,
-      properties: item.properties || []
-    }));
+    const lineItems = cartItems.map(item => 
+      { console.log(item.properties)
+        return {
+          variant_id: item.variant_id,
+          quantity: item.quantity,
+          properties: item.properties || []
+        }
+    });
 
     const draftOrderData = {
       draft_order: {
