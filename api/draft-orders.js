@@ -6,28 +6,16 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { lineItems, customItems, customer, email } = req.body;
-
-    const allLineItems = [...(lineItems || [])];
-
-    if (customItems?.length) {
-      customItems.forEach(item => {
-        allLineItems.push({
-          title: item.title,
-          price: item.price,
-          quantity: item.quantity || 1,
-          taxable: item.taxable ?? true,
-          properties: item.properties || []
-        });
-      });
-    }
+    const { lineItems, customer, email, shippingAddress, billingAddress } = req.body;
 
     const draftOrderData = {
       draft_order: {
-        line_items: allLineItems,
+        line_items: lineItems,
         customer,
         email,
-        note: "Manual draft order creation"
+        shipping_address: shippingAddress,
+        billing_address: billingAddress,
+        note: "Manual draft order creation via API"
       }
     };
 
@@ -42,9 +30,14 @@ export default async function handler(req, res) {
       }
     );
 
-    res.status(201).json(response.data);
+    res.status(201).json({
+      success: true,
+      draft_order_id: response.data.draft_order.id,
+      invoice_url: response.data.draft_order.invoice_url,
+      order_status_url: response.data.draft_order.order_status_url
+    });
   } catch (err) {
     console.error("Draft order error:", err.response?.data || err.message);
-    res.status(500).json({ error: "Failed to create draft order" });
+    res.status(500).json({ error: "Failed to create draft order", details: err.response?.data });
   }
 }
