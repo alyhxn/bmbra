@@ -15,8 +15,20 @@ export default async function handler(req, res) {
     }
 
     // Transform cart items to draft order line items
+    const customItems = [];
     const lineItems = cartItems.map(item => 
-      { console.log(item.properties)
+      { 
+        item.properties.forEach(prop => {
+          const price = prop.value.match(/\(\$(\d+(?:\.\d{2})?)\)/)[1];
+          console.log(price);
+          if(price)
+          customItems.push({
+            title: prop.name,
+            price,
+            quantity: 1,
+            taxable: false
+          });
+        });
         return {
           variant_id: item.variant_id,
           quantity: item.quantity,
@@ -27,6 +39,7 @@ export default async function handler(req, res) {
     const draftOrderData = {
       draft_order: {
         line_items: lineItems,
+        custom_items: customItems,
         email: email,
         note: note || "Custom order with properties",
         tags: "custom-properties",
