@@ -1,5 +1,6 @@
 import crypto from "crypto";
 import { createDraftOrderFromCheckout } from "./helpers/draftOrder.js";
+import cors, { runMiddleware } from "./helpers/cors.js";
 
 // Tell Vercel not to parse the body automatically
 export const config = {
@@ -28,6 +29,14 @@ function verifyWebhook(rawBody, hmacHeader) {
 }
 
 export default async function handler(req, res) {
+  // Run CORS middleware to handle preflight and add CORS headers
+  await runMiddleware(req, res, cors);
+
+  if (req.method === "OPTIONS") {
+    // Preflight request
+    return res.status(200).end();
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }

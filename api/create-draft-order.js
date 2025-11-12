@@ -1,6 +1,8 @@
 import axios from "axios";
+import cors, { runMiddleware } from "./helpers/cors.js";
 
 export default async function handler(req, res) {
+  await runMiddleware(req, res, cors);
   if (req.method !== "POST") {
     return res.status(405).json({ message: "Method not allowed" });
   }
