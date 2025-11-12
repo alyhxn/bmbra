@@ -19,15 +19,16 @@ export default async function handler(req, res) {
     const lineItems = cartItems.map(item => 
       { 
         item.properties.forEach(prop => {
+          if(!prop.value) return;
           const price = prop.value.match(/\(\$(\d+(?:\.\d{2})?)\)/)[1];
           console.log(price);
           if(price)
-          customItems.push({
-            title: prop.name,
-            price,
-            quantity: 1,
-            taxable: false
-          });
+            customItems.push({
+              title: prop.name,
+              price,
+              quantity: 1,
+              taxable: false
+            });
         });
         return {
           variant_id: item.variant_id,
