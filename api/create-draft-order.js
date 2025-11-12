@@ -39,8 +39,7 @@ export default async function handler(req, res) {
 
     const draftOrderData = {
       draft_order: {
-        line_items: lineItems,
-        custom_items: customItems,
+        line_items: [...lineItems, ...customItems],
         email: email,
         note: note || "Custom order with properties",
         tags: "custom-properties",
