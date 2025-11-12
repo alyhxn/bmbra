@@ -1,45 +1,55 @@
 import crypto from "crypto";
 import { createDraftOrderFromCheckout } from "./helpers/draftOrder.js";
-import express from "express";
 
-const app = express();
+// Tell Vercel not to parse the body automatically
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+};
 
-// Middleware to capture raw body
-app.use(
-  express.json({
-    verify: (req, res, buf) => {
-      req.rawBody = buf; // store raw body for HMAC verification
-    },
-  })
-);
-
-function verifyWebhook(req) {
-  const hmac = req.headers["x-shopify-hmac-sha256"];
-  const hash = crypto
-    .createHmac("sha256", process.env.SHOPIFY_WEBHOOK_SECRET)
-    .update(req.rawBody, "utf8") // use raw body
-    .digest("base64");
-
-  console.log("Computed hash:", hash, hmac);
-  return hash === hmac;
+// Helper to read raw body
+async function getRawBody(req) {
+  const chunks = [];
+  for await (const chunk of req) {
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 
-app.post("/webhook", async (req, res) => {
-  if (!verifyWebhook(req)) {
-    return res.status(401).send("Invalid signature");
+function verifyWebhook(rawBody, hmacHeader) {
+  const hash = crypto
+    .createHmac("sha256", process.env.SHOPIFY_WEBHOOK_SECRET)
+    .update(rawBody)
+    .digest("base64");
+
+  console.log("Computed hash:", hash, hmacHeader);
+  return crypto.timingSafeEqual(Buffer.from(hash), Buffer.from(hmacHeader));
+}
+
+export default async function handler(req, res) {
+  if (req.method !== "POST") {
+    return res.status(405).json({ message: "Method not allowed" });
   }
 
-  const checkout = req.body;
+  const rawBody = await getRawBody(req);
+  const hmacHeader = req.headers["x-shopify-hmac-sha256"];
+
+  if (!verifyWebhook(rawBody, hmacHeader)) {
+    return res.status(401).json({ error: "Invalid webhook signature" });
+  }
+
+  const checkout = JSON.parse(rawBody.toString("utf8"));
   console.log("Checkout received:", checkout);
 
+  // Respond quickly to Shopify
   res.status(200).send("Webhook received");
 
   try {
     const draftOrder = await createDraftOrderFromCheckout(checkout);
-    console.log("Draft order URL:", draftOrder.invoice_url);
+    console.log("Draft order invoice URL:", draftOrder.invoice_url);
+    // TODO: send invoice URL to customer
   } catch (err) {
-    console.error(err);
+    console.error("Webhook processing error:", err);
   }
-});
-
-app.listen(3000, () => console.log("Server running on port 3000"));
+}
