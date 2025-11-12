@@ -8,6 +8,7 @@ function verifyWebhook(req) {
     .createHmac("sha256", process.env.SHOPIFY_WEBHOOK_SECRET)
     .update(body, "utf8")
     .digest("base64");
+  console.log("Computed hash:", hash, hmac);
   return hash === hmac;
 }
 
