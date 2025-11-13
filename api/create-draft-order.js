@@ -23,7 +23,7 @@ export default async function handler(req, res) {
           const price = prop.value.match(/\(\$(\d+(?:\.\d{2})?)\)/)[1];
           if(price)
             customItems.push({
-              title: prop.name,
+              title: `${prop.name}: ${prop.value}`,
               price,
               quantity: item.quantity,
               taxable: false
