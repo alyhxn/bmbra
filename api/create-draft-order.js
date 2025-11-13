@@ -21,12 +21,11 @@ export default async function handler(req, res) {
         item.properties.forEach(prop => {
           if(!prop.value) return;
           const price = prop.value.match(/\(\$(\d+(?:\.\d{2})?)\)/)[1];
-          console.log(price);
           if(price)
             customItems.push({
               title: prop.name,
               price,
-              quantity: 1,
+              quantity: item.quantity,
               taxable: false
             });
         });
