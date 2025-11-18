@@ -20,14 +20,13 @@ export default async function handler(req, res) {
       { 
         item.properties.forEach(prop => {
           if(!prop.value) return;
-          const price = prop.value.match(/\(\$(\d+(?:\.\d{2})?)\)/)?.[1];
-          if(price)
-            customItems.push({
-              title: `${prop.name}: ${prop.value}`,
-              price,
-              quantity: item.quantity,
-              taxable: false
-            });
+          const price = prop.value.match(/\(\$(\d+(?:\.\d{2})?)\)/)?.[1] || 0;
+          customItems.push({
+            title: `${prop.name}: ${prop.value}`,
+            price,
+            quantity: item.quantity,
+            taxable: false
+          });
         });
         return {
           variant_id: item.variant_id,
